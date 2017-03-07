@@ -65,6 +65,8 @@
             </exclusions>
         </dependency>
 
+        <!-- org.apache.camel -->
+
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-jdbc</artifactId>
