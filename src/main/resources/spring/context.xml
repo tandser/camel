@@ -2,7 +2,6 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:camel="http://camel.apache.org/schema/spring"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:jdbc="http://www.springframework.org/schema/jdbc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
@@ -34,5 +33,26 @@
     <jdbc:initialize-database data-source="dataSource">
         <jdbc:script location="classpath:ddl/create.ddl"/>
     </jdbc:initialize-database>
+
+    <bean id="handler" class="ru.tandser.camel.Handler"/>
+
+    <camelContext id="camelContext" xmlns="http://camel.apache.org/schema/spring">
+        <route>
+            <from uri="file:data?noop=true"/>
+            <choice>
+                <when>
+                    <simple>${file:ext} == 'xml'</simple>
+                    <to uri="bean:handler?method=handleXml"/>
+                </when>
+                <when>
+                    <simple>${file:ext} == 'txt'</simple>
+                    <to uri="bean:handler?method=handleTxt"/>
+                </when>
+                <otherwise>
+                    <to uri="bean:handler?method=handleAny"/>
+                </otherwise>
+            </choice>
+        </route>
+    </camelContext>
 
 </beans>
