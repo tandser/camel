@@ -9,10 +9,10 @@
     <groupId>ru.tandser</groupId>
     <artifactId>camel</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -22,6 +22,13 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-maven-plugin</artifactId>
+                <version>2.18.2</version>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -65,7 +72,13 @@
 
         <dependency>
             <groupId>org.apache.camel</groupId>
-            <artifactId>camel-jdbc</artifactId>
+            <artifactId>camel-sql</artifactId>
+            <version>2.18.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-mail</artifactId>
             <version>2.18.2</version>
         </dependency>
 
@@ -108,6 +121,36 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.0.0</version>
+        </dependency>
+
+        <!-- javax.jms -->
+
+        <dependency>
+            <groupId>javax.jms</groupId>
+            <artifactId>jms-api</artifactId>
+            <version>1.1-rev-1</version>
+        </dependency>
+
+        <!-- javax.transaction -->
+
+        <dependency>
+            <groupId>javax.transaction</groupId>
+            <artifactId>javax.transaction-api</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <!-- org.codehaus.btm -->
+
+        <dependency>
+            <groupId>org.codehaus.btm</groupId>
+            <artifactId>btm</artifactId>
+            <version>2.1.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- org.slf4j -->

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:spring="http://camel.apache.org/schema/spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/jdbc
+                           http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+                           http://camel.apache.org/schema/spring
+                           http://camel.apache.org/schema/spring/camel-spring.xsd
+                           http://activemq.apache.org/schema/core
+                           http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+    <bean id="btmConfig" class="bitronix.tm.TransactionManagerServices" factory-method="getConfiguration">
+        <property name="serverId" value="spring-btm"/>
+        <property name="warnAboutZeroResourceTransaction" value="false"/>
+    </bean>
+
+    <bean id="bitronixTransactionManager" factory-method="getTransactionManager" class="bitronix.tm.TransactionManagerServices" depends-on="btmConfig" destroy-method="shutdown"/>
+
+    <bean id="jtaManager" class="org.springframework.transaction.jta.JtaTransactionManager" lazy-init="false">
+        <property name="userTransaction" ref="bitronixTransactionManager"/>
+        <property name="transactionManager" ref="bitronixTransactionManager"/>
+    </bean>
+
+    <bean id="transactionPolicy" class="org.apache.camel.spring.spi.SpringTransactionPolicy">
+        <property name="transactionManager" ref="jtaManager"/>
+        <property name="propagationBehaviorName" value="PROPAGATION_REQUIRED"/>
+    </bean>
+
+    <bean id="connectionFactory" class="bitronix.tm.resource.jms.PoolingConnectionFactory" init-method="init" destroy-method="close" depends-on="jtaManager">
+        <property name="className" value="org.apache.activemq.spring.ActiveMQXAConnectionFactory"/>
+        <property name="maxPoolSize" value="1"/>
+        <property name="minPoolSize" value="1"/>
+        <property name="uniqueName" value="xaConnectionFactory"/>
+        <property name="driverProperties">
+            <props>
+                <prop key="brokerURL">tcp://localhost:61616</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="activemqJmsConf" class="org.apache.camel.component.jms.JmsConfiguration">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="transactionManager" ref="jtaManager"/>
+        <property name="transacted" value="true"/>
+    </bean>
+
+    <bean id="jms" class="org.apache.camel.component.jms.JmsComponent" depends-on="jtaManager" lazy-init="false">
+        <property name="configuration" ref="activemqJmsConf"/>
+    </bean>
+
+
+    <context:property-placeholder location="classpath:properties/postgres@localhost.properties"/>
+
+    <bean id="dataSource" class="bitronix.tm.resource.jdbc.PoolingDataSource" init-method="init" destroy-method="close">
+        <property name="className" value="org.postgresql.xa.PGXADataSource"/>
+        <property name="uniqueName" value="postgresql"/>
+        <property name="minPoolSize" value="1"/>
+        <property name="maxPoolSize" value="5"/>
+        <property name="driverProperties">
+            <props>
+                <prop key="url">${localhost.url}</prop>
+                <prop key="user">${localhost.username}</prop>
+                <prop key="password">${localhost.password}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="sql" class="org.apache.camel.component.sql.SqlComponent">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="customEventNotifier" class="ru.tandser.camel.CustomEventNotifier"/>
+
+    <camelContext xmlns="http://camel.apache.org/schema/spring">
+        <package>ru.tandser.camel</package>
+    </camelContext>
+
+</beans>
